@@ -1,0 +1,29 @@
+[
+  {
+    "Request Title": "Laptop for remote work",
+    "Request Details": "I need a new laptop to work from home.",
+    "Status": "Pending",
+    "Priority": 4,
+    "Category": "Hardware",
+    "Requestor": "John Doe",
+    "Created On": "2025-11-01T09:00:00Z"
+  },
+  {
+    "Request Title": "VPN Access",
+    "Request Details": "Please provide VPN access for secure connection.",
+    "Status": "Pending",
+    "Priority": 3,
+    "Category": "Access",
+    "Requestor": "Jane Smith",
+    "Created On": "2025-11-02T10:30:00Z"
+  },
+  {
+    "Request Title": "Install Adobe Photoshop",
+    "Request Details": "Need Photoshop for design work.",
+    "Status": "Pending",
+    "Priority": 2,
+    "Category": "Software",
+    "Requestor": "Alex Lee",
+    "Created On": "2025-11-03T14:15:00Z"
+  }
+]
