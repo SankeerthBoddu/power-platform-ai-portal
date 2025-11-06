@@ -32,7 +32,7 @@ jobs:
 
       - name: Archive Function App
         run: |
-          zip -r ../package.zip .
+          zip -r package.zip .
 
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
