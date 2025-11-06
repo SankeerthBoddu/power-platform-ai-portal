@@ -30,6 +30,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -t .
 
+      - name: Validate target app vs publish profile
+        shell: bash
+        run: |
+          echo "Validating Function App name matches publish profile..."
+          PP_FILE="${{ github.workspace }}/publishProfile.xml"
+          echo "${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}" > "$PP_FILE"
+          SITE_NAME=$(grep -oP 'siteName="\K[^\"]+' "$PP_FILE" | head -n 1 || true)
+          if [ -z "$SITE_NAME" ]; then
+            echo "::warning::Could not parse siteName from publish profile. Proceeding, but if deployment fails with 404, verify the publish profile is for the correct Function App."
+          else
+            # Mask secrets/values
+            echo "::add-mask::${{ secrets.AZURE_FUNCTIONAPP_NAME }}"
+            echo "::add-mask::$SITE_NAME"
+            if [ "$SITE_NAME" != "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" ]; then
+              echo "::error::The provided app-name does not match the publish profile siteName. Update AZURE_FUNCTIONAPP_NAME or the publish profile secret to use the same Function App."
+              exit 1
+            fi
+          fi
+          rm -f "$PP_FILE"
+
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
         with:
