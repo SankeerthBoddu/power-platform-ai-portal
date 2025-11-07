@@ -36,6 +36,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Ensure Azure CLI extension (webapp)
+        shell: bash
+        run: |
+          az extension add -n webapp --upgrade --yes
+
       - name: Validate target app vs publish profile
         shell: bash
         run: |
@@ -78,5 +83,5 @@ jobs:
             echo "Targeting slot: $SLOT"
             SLOT_ARG="--slot $SLOT"
           fi
-          # Working directory is azure-function; deploy current folder with remote build
-          az functionapp deploy --resource-group "$RG" --name "$APP_NAME" $SLOT_ARG --src-path . --type zip --build-remote true
+          # Working directory is azure-function; deploy current folder. Remote build is inferred for Flex.
+          az functionapp deploy --resource-group "$RG" --name "$APP_NAME" $SLOT_ARG --src-path . --type zip
