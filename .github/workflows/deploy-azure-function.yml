@@ -25,10 +25,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Resolve dependencies
+      - name: Upgrade pip (for future tooling, no local install)
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt -t .
 
       # Flex Consumption doesn't support Kudu/zipDeploy; we use Azure CLI deploy instead
       - name: Azure Login (service principal)
@@ -102,4 +101,4 @@ jobs:
             echo "::error::Deploy package not found at $SRC"
             exit 1
           fi
-          az functionapp deploy --resource-group "$RG" --name "$APP_NAME" $SLOT_ARG --src-path "$SRC" --type zip
+          az functionapp deploy --resource-group "$RG" --name "$APP_NAME" $SLOT_ARG --src-path "$SRC" --type zip --build-remote
