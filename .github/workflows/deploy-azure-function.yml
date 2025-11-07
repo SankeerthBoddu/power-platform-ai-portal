@@ -30,6 +30,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -t .
 
+      # Flex Consumption doesn't support Kudu/zipDeploy; we use Azure CLI deploy instead
+      - name: Azure Login (service principal)
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Validate target app vs publish profile
         shell: bash
         run: |
@@ -50,9 +56,27 @@ jobs:
           fi
           rm -f "$PP_FILE"
 
-      - name: Deploy to Azure Functions
-        uses: Azure/functions-action@v1
-        with:
-          app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-          package: azure-function
+      - name: Deploy to Azure Functions (Flex Consumption)
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_NAME="${{ secrets.AZURE_FUNCTIONAPP_NAME }}"
+          if [ -z "$APP_NAME" ]; then
+            echo "::error::AZURE_FUNCTIONAPP_NAME secret is not set."
+            exit 1
+          fi
+          # Discover resource group for the app to avoid requiring another secret
+          RG=$(az resource list --name "$APP_NAME" --resource-type Microsoft.Web/sites --query "[0].resourceGroup" -o tsv)
+          if [ -z "$RG" ]; then
+            echo "::error::Could not resolve resource group for $APP_NAME. Ensure the app exists and the service principal has access."
+            exit 1
+          fi
+          echo "Deploying to $APP_NAME in resource group $RG"
+          SLOT="${{ secrets.AZURE_FUNCTIONAPP_SLOT }}"
+          SLOT_ARG=""
+          if [ -n "$SLOT" ]; then
+            echo "Targeting slot: $SLOT"
+            SLOT_ARG="--slot $SLOT"
+          fi
+          # Working directory is azure-function; deploy current folder with remote build
+          az functionapp deploy --resource-group "$RG" --name "$APP_NAME" $SLOT_ARG --src-path . --type zip --build-remote true
