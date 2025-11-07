@@ -41,6 +41,19 @@ jobs:
         run: |
           az extension add -n webapp --upgrade --yes
 
+      - name: Create deploy package (zip)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_PATH="${{ github.workspace }}/functionapp.zip"
+          echo "Creating archive at $ZIP_PATH"
+          zip -r "$ZIP_PATH" .
+          if [ ! -f "$ZIP_PATH" ]; then
+            echo "::error::Failed to create deploy archive"
+            ls -la
+            exit 1
+          fi
+
       - name: Validate target app vs publish profile
         shell: bash
         run: |
@@ -83,5 +96,10 @@ jobs:
             echo "Targeting slot: $SLOT"
             SLOT_ARG="--slot $SLOT"
           fi
-          # Working directory is azure-function; deploy current folder. Remote build is inferred for Flex.
-          az functionapp deploy --resource-group "$RG" --name "$APP_NAME" $SLOT_ARG --src-path . --type zip
+          # Deploy from created archive (absolute path avoids path issues)
+          SRC="${{ github.workspace }}/functionapp.zip"
+          if [ ! -f "$SRC" ]; then
+            echo "::error::Deploy package not found at $SRC"
+            exit 1
+          fi
+          az functionapp deploy --resource-group "$RG" --name "$APP_NAME" $SLOT_ARG --src-path "$SRC" --type zip
